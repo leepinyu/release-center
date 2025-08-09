@@ -7,7 +7,7 @@ on:
       - main
   
 env:
-  S3_LOCATION_RUI : "s3://release-center-github-actions-poc-leepinyu/single-stage"
+  S3_LOCATION_RUI : "s3://release-center-github-actions-poc-leepinyu/release-center/single-stage"
   AWS_REGION : "us-east-1"
   ROLE_TO_ASSUME: "arn:aws:iam::804799396526:role/LeepinyuPoc"
   ROLE_TO_ASSUME_SESSION_NAME: "ReleaseCenterSession"
