@@ -3,8 +3,8 @@ name: AWS Sync to S3 and Deploy To All Stages
 on:
   push:
     tags: # Deployment on tag
-      - 'prod-*'
-      - 'dev-*'
+      - 'deploy-prod'
+      - 'deploy-dev'
   
 env:
   REPO_S3_LOCATION_URI : "s3://release-center-github-actions-poc-leepinyu/release-center/multiple-stages/repo/"
