@@ -7,9 +7,9 @@ on:
       - main
   
 env:
-  S3_LOCATION_RUI : "s3://release-center-github-actions-poc-zhajngy/release-center/stages/dev/"
+  S3_LOCATION_RUI : "s3://release-center-github-actions-poc-leepinyu"
   AWS_REGION : "us-east-1"
-  ROLE_TO_ASSUME: "arn:aws:iam::342262164519:role/release-center-github-actions-poc-role-zhajngy"
+  ROLE_TO_ASSUME: "arn:aws:iam::804799396526:role/LeepinyuPoc"
   ROLE_TO_ASSUME_SESSION_NAME: "ReleaseCenterSession"
   
 # permission can be added at job level or workflow level
