@@ -1,0 +1,87 @@
+name: AWS Sync to S3 and Deploy To All Stages
+
+on:
+  push:
+    branches:
+      - main
+  
+env:
+  REPO_S3_LOCATION_URI : "s3://release-center-github-actions-poc-leepinyu/release-center/multiple-stages/repo/"
+  DEV_S3_LOCATION_URI : "s3://release-center-github-actions-poc-leepinyu/release-center/multiple-stages/dev/"
+  TEST_S3_LOCATION_URI : "s3://release-center-github-actions-poc-leepinyu/release-center/multiple-stages/test/"
+  PROD_S3_LOCATION_URI : "s3://release-center-github-actions-poc-leepinyu/release-center/multiple-stages/prod"
+  AWS_REGION : "us-east-1"
+  ROLE_TO_ASSUME: "arn:aws:iam::804799396526:role/LeepinyuPoc"
+  ROLE_TO_ASSUME_SESSION_NAME: "ReleaseCenterSession"
+  
+# permission can be added at job level or workflow level
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+  
+jobs:
+  upload-repo-to-s3:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+        
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4.2.1
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          role-session-name: ${{ env.ROLE_TO_ASSUME_SESSION_NAME }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Copy repo to s3
+        run: |
+          aws s3 sync . ${{ env.REPO_S3_LOCATION_URI }} --delete
+
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: ubuntu-latest
+    needs: upload-repo-to-s3
+    steps:
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4.2.1
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          role-session-name: ${{ env.ROLE_TO_ASSUME_SESSION_NAME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync repo to dev
+        run: |
+          aws s3 sync ${{ env.REPO_S3_LOCATION_URI }} ${{ env.DEV_S3_LOCATION_URI }} --delete
+
+  deploy-test:
+    name: Deploy to Test
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    steps:
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4.2.1
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          role-session-name: ${{ env.ROLE_TO_ASSUME_SESSION_NAME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync dev to test
+        run: |
+          aws s3 sync ${{ env.DEV_S3_LOCATION_URI }} ${{ env.TEST_S3_LOCATION_URI }} --delete
+
+
+  deploy-prod:
+    name: Deploy to Prod
+    runs-on: ubuntu-latest
+    needs: deploy-test
+    steps:
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4.2.1
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          role-session-name: ${{ env.ROLE_TO_ASSUME_SESSION_NAME }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Sync test to prod
+        run: |
+          aws s3 sync ${{ env.TEST_S3_LOCATION_URI }} ${{ env.PROD_S3_LOCATION_URI }} --delete
