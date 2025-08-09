@@ -1,0 +1,37 @@
+# The workflow copy repo to aws s3
+name: AWS Sync to S3
+
+on:
+  push:
+    branches:
+      - main
+  
+env:
+  S3_LOCATION_RUI : "s3://release-center-github-actions-poc-zhajngy/release-center/stages/dev/"
+  AWS_REGION : "us-east-1"
+  ROLE_TO_ASSUME: "arn:aws:iam::342262164519:role/release-center-github-actions-poc-role-zhajngy"
+  ROLE_TO_ASSUME_SESSION_NAME: "ReleaseCenterSession"
+  
+# permission can be added at job level or workflow level
+permissions:
+  id-token: write   # This is required for requesting the JWT
+  contents: read    # This is required for actions/checkout
+  
+jobs:
+  S3PackageUpload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+        
+      - name: Configure aws credentials
+        uses: aws-actions/configure-aws-credentials@v4.2.1
+        with:
+          role-to-assume: ${{ env.ROLE_TO_ASSUME }}
+          role-session-name: ${{ env.ROLE_TO_ASSUME_SESSION_NAME }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      # Upload repo to AWS s3
+      - name: Copy repo to s3
+        run: |
+          aws s3 sync . ${{ env.S3_LOCATION_RUI }} --delete
